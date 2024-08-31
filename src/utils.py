@@ -1356,3 +1356,80 @@ def filter_df(df, all_widgets):
                 min_val, max_val = data
                 res = res.loc[(res[column] >= min_val) & (res[column] <= max_val)]
     return res
+
+# Función para identificar columnas categóricas y no categóricas
+def identificar_columnas(df):
+    categoricas = df.select_dtypes(include=['object', 'category']).columns.tolist()
+    no_categoricas = df.select_dtypes(exclude=['object', 'category']).columns.tolist()
+    return categoricas, no_categoricas
+
+# Función para visualizar columnas categóricas
+def visualizar_categoricas(df, nombre):
+    categoricas, _ = identificar_columnas(df)
+    for col in categoricas:
+        plt.figure(figsize=(10, 6))
+        df[col].value_counts().plot(kind='bar', color='skyblue')
+        plt.title(f'Distribución de {col} en {nombre}')
+        plt.ylabel('Frecuencia')
+        plt.xlabel(col)
+        plt.xticks(rotation=45)
+        plt.show()
+
+        plt.figure(figsize=(8, 8))
+        df[col].value_counts().plot(kind='pie', autopct='%1.1f%%')
+        plt.title(f'Porcentaje de {col} en {nombre}')
+        plt.ylabel('')
+        plt.show()
+
+# Función para visualizar columnas numéricas
+def visualizar_numericas(df, nombre):
+    _, no_categoricas = identificar_columnas(df)
+    for col in no_categoricas:
+        plt.figure(figsize=(10, 6))
+        sns.histplot(df[col].dropna(), kde=True, color='green')
+        plt.title(f'Distribución de {col} en {nombre}')
+        plt.xlabel(col)
+        plt.ylabel('Frecuencia')
+        plt.show()
+
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(y=df[col], color='orange')
+        plt.title(f'Boxplot de {col} en {nombre}')
+        plt.ylabel(col)
+        plt.show()
+
+# Función para visualizar relaciones entre variables numéricas
+def visualizar_correlaciones(df, nombre):
+    _, no_categoricas = identificar_columnas(df)
+    if len(no_categoricas) > 1:
+        plt.figure(figsize=(12, 8))
+        sns.heatmap(df[no_categoricas].corr(), annot=True, cmap='coolwarm', fmt='.2f')
+        plt.title(f'Correlación entre variables numéricas en {nombre}')
+        plt.show()
+
+# Función para aplicar Label Encoding
+def aplicar_label_encoding(df):
+    le = LabelEncoder()
+    categoricas, _ = identificar_columnas(df)
+    for col in categoricas:
+        df[col] = le.fit_transform(df[col].astype(str))
+    return df
+
+# Procesar y visualizar cada dataframe
+for df, nombre in zip([df1, df2, df3, df4, df5], 
+                      ["consumos_participantes", "df_target_participantes", 
+                       "df_cobros_participantes", "df_loans_participantes", "df_quejas_participantes"]):
+    
+    print(f'\nVisualizando {nombre}...\n')
+    
+    # Visualizar columnas categóricas
+    visualizar_categoricas(df, nombre)
+    
+    # Aplicar Label Encoding
+    df = aplicar_label_encoding(df)
+    
+    # Visualizar columnas numéricas
+    visualizar_numericas(df, nombre)
+    
+    # Visualizar relaciones entre variables numéricas
+    visualizar_correlaciones(df, nombre)
